@@ -15,9 +15,13 @@ function Feed(props) {
   const listInnerRef = useRef();
   const [wasLastList, setWasLastList] = useState(false);
 
-  const axiosJWT = axios.create();
+// Remove the axiosJWT instance and its interceptor
+// const axiosJWT = axios.create();
+// Intercept(axiosJWT);
 
-  Intercept(axiosJWT);
+ const axios1 = axios.create();
+
+
   useEffect(() => {
     if (props.rerenderFeed === 1) {
       setCurrPage(1);
@@ -27,9 +31,8 @@ function Feed(props) {
     }
     props.onChange(0);
     const fetchPosts = async () => {
-      const res = await axiosJWT.get(
+      const res = await axios1.get(
         `http://localhost:8000/api/article/timeline?page=${currPage}`,
-        { headers: { Authorization: "Bearer " + user.accessToken } }
       );
       if (res.data.Articles.length === 1) {
         setWasLastList(true);
@@ -55,8 +58,7 @@ function Feed(props) {
     prevPage,
     posts,
     loadingNewPosts,
-    axiosJWT,
-    user.accessToken,
+    axios,
     props,
   ]);
   const onScroll = () => {

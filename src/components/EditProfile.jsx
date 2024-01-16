@@ -15,37 +15,59 @@ function EditProfile(props) {
   const [username, setUsername] = useState(user.data.username);
   const [email, setEmail] = useState(user.data.email);
   const axiosJWT = axios.create();
-  Intercept(axiosJWT);
+
+
   const EditHandler = async (e) => {
     e.preventDefault();
     e.currentTarget.disabled = true;
     const UpdateData = { description, username, email };
     try {
-      const formDataFile = new FormData();
       if (file) {
-        formDataFile.append("file", file);
-        formDataFile.append("upload_preset", "raw8ntho");
-        const img = await axios.post(
-          "https://api.cloudinary.com/v1_1/YOUR_UPLOAD_PRESET/image/upload",
-          formDataFile
-        );
-        UpdateData.profilePicture = img.data.secure_url;
+        const fileName = `uploads/${Date.now()}_${file.name}`;
+
+        const reader = new FileReader();
+
+        reader.onload = async () => {
+          try {
+            await fetch(`http://localhost:8000/api/upload`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                fileName,
+                fileData: reader.result.split(',')[1],
+              }),
+            });
+          } catch (error) {
+            console.error('Error uploading file:', error);
+          }
+        };
+
+        reader.readAsDataURL(file);
+
+        UpdateData.profilePicture = fileName;
       }
+
       const res = await axiosJWT.put(
         `http://localhost:8000/api/user/${user.data._id}`,
         UpdateData,
-        {
-          headers: { Authorization: "Bearer " + user.accessToken },
-        }
+       
       );
+
       dispatch({ type: "UPDATE_DATA", payload: res.data.user });
       props.onClose();
       navigate(`/profile/${username}`);
     } catch (error) {
-      NotificationManager.error(error.response.data.message, "Warning", 3000);
+      NotificationManager.error(
+        error.response.data.message,
+        "Warning",
+        3000
+      );
       props.onClose();
     }
   };
+
   return (
     <EditProfileContainer>
       <div className="editProfileWrapper">
@@ -100,7 +122,7 @@ function EditProfile(props) {
               />
             </div>
             <div className="editProfileBoxInput">
-              <button className="editProfileButton" onClick={EditHandler}>
+              <button className="editProfileButton">
                 Save
               </button>
             </div>

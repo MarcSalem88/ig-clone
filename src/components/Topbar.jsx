@@ -23,9 +23,6 @@ function Topbar(props) {
   const [searchquery, setSearchquery] = useState("");
   const [showBarSearchMobile, setShowBarSearchMobile] = useState(false);
   const logoutHandler = async () => {
-    await axios.post("http://localhost:8000/api/user/logout", {
-      refreshToken: user.refreshToken,
-    });
     localStorage.setItem("user", null);
     window.location.reload(false);
   };
@@ -141,7 +138,7 @@ function Topbar(props) {
                     navigate(`/profile/${user.data.username}`);
                   }}
                 >
-                  Profil
+                  Profile
                 </span>
 
                 <span className="menuItems" onClick={logoutHandler}>

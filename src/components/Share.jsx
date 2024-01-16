@@ -14,37 +14,71 @@ function Share(props) {
   const [file, setFile] = useState(null);
   const axiosJWT = axios.create();
   Intercept(axiosJWT);
+
+  const userDataString = localStorage.getItem("user"); // Replace with the actual user ID
+  const userData = JSON.parse(userDataString);
+  const userId = userData.data._id;
+
+  console.log(userId);
   const submitHandler = async (e) => {
     e.preventDefault();
-    e.currentTarget.disabled = true;
-    let formDataInfo = {};
-    formDataInfo.description = desc.current.value;
+  
     try {
-      const formDataFile = new FormData();
-      if (file) {
-        formDataFile.append("file", file);
-        formDataFile.append("upload_preset", "raw8ntho");
-
-        const img = await axios.post(
-          "https://api.cloudinary.com/v1_1/YOUR_UPLOAD_PRESET/image/upload",
-          formDataFile
-        );
-        formDataInfo.imgurl = img.data.secure_url;
-
-        await axiosJWT.post("http://localhost:8000/api/article", formDataInfo, {
-          headers: { Authorization: "Bearer " + user.accessToken },
-        });
-        NotificationManager.success("Success", "Post has been created", 3000);
-        props.hideAddPostHandler();
-        navigate(`/home`);
-      } else {
-        e.currentTarget.disabled = false;
-        throw new Error("No file !!");
+      if (!file) {
+        throw new Error("Photo is required");
       }
-    } catch (e) {
-      NotificationManager.warning("Warning", "Photo is required", 3000);
+  
+      if (e.currentTarget) {
+        e.currentTarget.disabled = true;
+      } else {
+        throw new Error("Button element is not available");
+      }
+  
+      const formDataInfo = {
+        description: desc.current.value,
+        imgurl: null,
+      };
+  
+      const formDataFile = new FormData();
+      formDataFile.append("file", file); // Append the actual file, not a string
+  
+      const img = await axios.post(
+        "http://localhost:8000/api/upload",
+        formDataFile,
+      
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+            "user-id": user.data._id
+          },
+        }
+      );
+  
+      formDataInfo.imgurl = img.data.imageUrl;
+  
+      await axiosJWT.post("http://localhost:8000/api/article", formDataInfo );
+  
+      NotificationManager.success(
+        "Success",
+        "Post has been created",
+        3000
+      );
+  
+      props.hideAddPostHandler();
+      navigate(`/home`);
+    } catch (error) {
+      NotificationManager.warning(
+        "Warning",
+        error.message || "Something went wrong",
+        3000
+      );
+    } finally {
+      if (e.currentTarget) {
+        e.currentTarget.disabled = false;
+      }
     }
   };
+  
   return (
     <ShareContainer>
       <div className="shareWrapper">
